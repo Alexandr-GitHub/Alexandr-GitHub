@@ -19,8 +19,11 @@ jobs:
 
       - uses: yoshi389111/github-profile-3d-contrib@latest
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Для языков из приватных репо: создайте PAT (scope repo) и секрет GH_CONTRIB_TOKEN
+          # + включите «Include private contributions» в настройках профиля GitHub
+          GITHUB_TOKEN: ${{ secrets.GH_CONTRIB_TOKEN || secrets.GITHUB_TOKEN }}
           USERNAME: ${{ github.repository_owner }}
+          MAX_REPOS: 100
 
       - name: Commit & Push
         env:
