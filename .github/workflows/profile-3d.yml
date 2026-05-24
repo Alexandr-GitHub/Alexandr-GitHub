@@ -17,11 +17,33 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Check contribution token (read:user required for private repo languages)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_CONTRIB_TOKEN }}
+          USERNAME: ${{ github.repository_owner }}
+        run: |
+          if [ -z "$GITHUB_TOKEN" ]; then
+            echo "::error::Добавьте секрет GH_CONTRIB_TOKEN (classic PAT: repo + read:user)."
+            exit 1
+          fi
+          result=$(curl -sS -H "Authorization: bearer $GITHUB_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{\"query\":\"query { user(login: \\\"$USERNAME\\\") { contributionsCollection { restrictedContributionsCount totalCommitContributions commitContributionsByRepository(maxRepositories: 20) { repository { name primaryLanguage { name } } contributions { totalCount } } } } }\"}" \
+            https://api.github.com/graphql)
+          echo "$result" | jq '{
+            restricted: .data.user.contributionsCollection.restrictedContributionsCount,
+            totalCommits: .data.user.contributionsCollection.totalCommitContributions,
+            repos: [.data.user.contributionsCollection.commitContributionsByRepository[] | {name: .repository.name, lang: .repository.primaryLanguage.name, commits: .contributions.totalCount}]
+          }'
+          restricted=$(echo "$result" | jq -r '.data.user.contributionsCollection.restrictedContributionsCount // 0')
+          langs=$(echo "$result" | jq '[.data.user.contributionsCollection.commitContributionsByRepository[] | select(.repository.primaryLanguage != null)] | length')
+          if [ "$restricted" -gt 0 ] && [ "$langs" -eq 0 ]; then
+            echo "::warning::У токена нет read:user или GitHub не отдаёт приватные коммиты. В SVG будет other. Создайте classic PAT с scope: repo, read:user."
+          fi
+
       - uses: yoshi389111/github-profile-3d-contrib@latest
         env:
-          # Для языков из приватных репо: создайте PAT (scope repo) и секрет GH_CONTRIB_TOKEN
-          # + включите «Include private contributions» в настройках профиля GitHub
-          GITHUB_TOKEN: ${{ secrets.GH_CONTRIB_TOKEN || secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_CONTRIB_TOKEN }}
           USERNAME: ${{ github.repository_owner }}
           MAX_REPOS: 100
 
