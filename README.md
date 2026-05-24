@@ -1,5 +1,7 @@
-# Hi, I'm Alexandr 👋
+# Привет, я Александр 👨‍💻
 
-3D contribution graph (auto-updated daily):
+![](./profile-3d-contrib/profile-gitblock.svg)
 
-![](./profile-3d-contrib/profile-green-animate.svg)
+### Языки программирования
+
+![Top Langs](https://github-readme-stats.vercel.app/api/top-langs/?username=Alexandr-GitHub&layout=compact&langs_count=10&hide_progress=false&locale=ru&theme=default)
